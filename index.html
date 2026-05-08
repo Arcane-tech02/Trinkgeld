@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Trinkgeld Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7f3ee;--surf:#fff;--brd:#e8e2da;--ink:#1a1612;--mut:#9a9088;--gold:#c8860a;--gol:#fdf3dc;--gom:#f5c842;--grn:#1a7a4a;--grnl:#e8f5ee;--blu:#1a5fa0;--blul:#e8f0fb;--blum:#4a9eff;--red:#c0392b;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--ink);font-family:'Syne',sans-serif;min-height:100vh;padding-bottom:50px;}
+.hdr{background:var(--ink);padding:13px 14px 10px;position:sticky;top:0;z-index:100;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.hdr h1{font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px;line-height:1;}
+.hdr h1 span{color:var(--gom);}
+.hpills{display:flex;gap:5px;}
+.hp{background:rgba(255,255,255,0.07);border-radius:8px;padding:5px 9px;text-align:center;}
+.hp .ha{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;line-height:1;}
+.hp .hl{font-size:9px;letter-spacing:0.8px;text-transform:uppercase;margin-top:2px;color:#777;}
+.hp-b .ha{color:var(--gom);}.hp-o .ha{color:var(--blum);}.hp-t .ha{color:#fff;}
+.tabs{display:flex;background:#111;padding:0 10px;gap:2px;overflow-x:auto;}
+.tab{flex:1;padding:9px 2px;text-align:center;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#555;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;min-width:52px;}
+.tab.active{color:var(--gom);border-bottom-color:var(--gom);}
+.tab.ausgaben-tab{color:#e05050;}
+.tab.ausgaben-tab.active{color:#e05050;border-bottom-color:#e05050;}
+.btn-export{width:100%;padding:12px;background:#1a1612;color:var(--gom);border:1.5px solid #333;border-radius:9px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;display:block;}
+.btn-export:active{opacity:0.8;}
+.btn-import{width:100%;padding:12px;background:#1a1612;color:var(--blum);border:1.5px solid #333;border-radius:9px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:block;}
+.btn-import:active{opacity:0.8;}
+.page{display:none;padding:12px;}
+.page.active{display:block;}
+.card{background:var(--surf);border-radius:14px;border:1.5px solid var(--brd);padding:14px;margin-bottom:12px;}
+.date-inp{width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:9px;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;background:var(--bg);color:var(--ink);outline:none;margin-bottom:10px;}
+.date-inp:focus{border-color:var(--gold);background:var(--gol);}
+.type-tog{display:flex;background:var(--bg);border-radius:10px;border:1.5px solid var(--brd);padding:3px;gap:3px;margin-bottom:10px;}
+.ttbtn{flex:1;padding:9px 2px;border:none;border-radius:7px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--mut);transition:all 0.15s;}
+.ttbtn.ab{background:var(--gol);color:var(--gold);border:1.5px solid var(--gom);}
+.ttbtn.ao{background:var(--blul);color:var(--blu);border:1.5px solid var(--blum);}
+.ttbtn.aboth{background:#f3eeff;color:#7c3aed;border:1.5px solid #c4b5fd;}
+.amt-block{margin-bottom:10px;}
+.amt-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.amt-wrap{position:relative;}
+.amt-wrap .sym{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;pointer-events:none;}
+.amt-inp{width:100%;padding:13px 12px 13px 30px;border:1.5px solid var(--brd);border-radius:9px;font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;background:var(--bg);color:var(--ink);outline:none;transition:border-color 0.2s,background 0.2s;}
+.sym-bar{color:var(--gold);}
+.sym-online{color:var(--blu);}
+.inp-bar:focus{border-color:var(--gold);background:var(--gol);}
+.inp-online:focus{border-color:var(--blum);background:var(--blul);}
+.btn-primary{width:100%;padding:14px;background:var(--ink);color:var(--gom);border:none;border-radius:9px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;margin-bottom:8px;display:block;}
+.btn-primary.ob{color:var(--blum);}
+.btn-primary.oboth{color:#c4b5fd;}
+.btn-primary:active{transform:scale(0.98);opacity:0.85;}
+.btn-ghost{width:100%;padding:11px;background:var(--bg);color:var(--mut);border:1.5px dashed var(--brd);border-radius:9px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;display:block;margin-bottom:8px;}
+.btn-ghost:active{background:var(--brd);}
+.btn-tour{width:100%;padding:11px;background:rgba(124,58,237,0.08);color:#7c3aed;border:1.5px solid rgba(124,58,237,0.3);border-radius:9px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;display:block;}
+.btn-tour:active{background:rgba(124,58,237,0.15);}
+.sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--mut);margin-bottom:7px;padding:0 2px;}
+.elist{display:flex;flex-direction:column;gap:6px;}
+.ei{display:flex;align-items:center;gap:10px;background:var(--surf);border-radius:11px;border:1.5px solid var(--brd);padding:10px 12px;animation:si 0.2s ease;}
+.ei.ib{border-left:3px solid var(--gom);}
+.ei.io{border-left:3px solid var(--blum);}
+.ei.iz{border-left:3px solid var(--brd);}
+.ei.iboth{border-left:3px solid #7c3aed;}
+@keyframes si{from{opacity:0;transform:translateY(-5px);}to{opacity:1;transform:translateY(0);}}
+.ei-tour-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;margin-top:2px;display:inline-block;}
+.ei-date{border-radius:8px;padding:5px 8px;text-align:center;flex-shrink:0;min-width:40px;}
+.ib .ei-date,.iboth .ei-date{background:var(--gol);}
+.io .ei-date{background:var(--blul);}
+.iz .ei-date{background:var(--bg);}
+.ei-date .dn{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;line-height:1;}
+.ib .dn,.iboth .dn{color:var(--gold);}.io .dn{color:var(--blu);}.iz .dn{color:var(--mut);}
+.ei-date .dw{font-size:9px;font-weight:700;text-transform:uppercase;margin-top:1px;}
+.ib .dw,.iboth .dw{color:var(--gold);}.io .dw{color:var(--blu);}.iz .dw{color:var(--mut);}
+.ei-mid{flex:1;min-width:0;}
+.ei-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;}
+.ib .ei-type{color:var(--gold);}.io .ei-type{color:var(--blu);}.iz .ei-type{color:var(--mut);}.iboth .ei-type{color:#7c3aed;}
+.ei-amt{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;flex-shrink:0;}
+.ib .ei-amt{color:var(--grn);}.io .ei-amt{color:var(--blu);}.iz .ei-amt{color:var(--mut);}
+.ei-del{background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;padding:2px;flex-shrink:0;}
+.ei-del:active{color:var(--red);}
+.tour-group-hdr{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:9px;margin-bottom:4px;margin-top:8px;}
+.tgh-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.tgh-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.tgh-sum{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-left:auto;}
+.ungrouped-hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mut);padding:4px 2px;margin-top:8px;display:block;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;}
+.picker{background:var(--surf);border-radius:16px 16px 0 0;padding:18px;width:100%;animation:slideUp 0.25s ease;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.picker-title{font-size:15px;font-weight:800;margin-bottom:14px;text-align:center;}
+.picker-inp{width:100%;padding:11px 13px;border:1.5px solid var(--brd);border-radius:9px;font-family:'Syne',sans-serif;font-size:15px;font-weight:600;background:var(--bg);color:var(--ink);outline:none;margin-bottom:12px;}
+.picker-inp:focus{border-color:#7c3aed;background:#f3eeff;}
+.picker-colors{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.pc{width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all 0.15s;flex-shrink:0;}
+.pc.sel{border-color:var(--ink);transform:scale(1.15);}
+.picker-confirm{width:100%;padding:13px;background:var(--ink);color:var(--gom);border:none;border-radius:9px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;}
+.picker-cancel{width:100%;padding:10px;background:transparent;color:var(--mut);border:none;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.wnav,.mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.wnav button,.mnav button{background:var(--surf);border:1.5px solid var(--brd);border-radius:8px;width:34px;height:34px;font-size:18px;cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center;}
+.wnav button:active,.mnav button:active{background:var(--brd);}
+.wlbl,.mlbl{font-size:14px;font-weight:800;}
+.wbc{background:var(--surf);border-radius:13px;border:1.5px solid var(--brd);padding:12px;margin-bottom:12px;}
+.wleg{display:flex;gap:12px;margin-bottom:8px;}
+.wli{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--mut);font-weight:600;}
+.wld{width:10px;height:10px;border-radius:3px;}
+.bwrap{display:flex;align-items:flex-end;gap:4px;height:90px;margin-bottom:8px;}
+.bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;}
+.bstack{width:100%;display:flex;flex-direction:column;justify-content:flex-end;border-radius:5px 5px 0 0;overflow:hidden;min-height:3px;}
+.bamt{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;color:var(--ink);white-space:nowrap;}
+.bday{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--mut);}
+.bday.td{color:var(--gold);}
+.wtr{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding-top:8px;border-top:1px solid var(--brd);}
+.wtb{text-align:center;}
+.wtb .wv{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;line-height:1;}
+.wtb .wl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--mut);margin-top:2px;}
+.wvc{color:var(--gold);}.wvo{color:var(--blu);}.wvt{color:var(--grn);}
+.cgrid{background:var(--surf);border-radius:13px;border:1.5px solid var(--brd);overflow:hidden;margin-bottom:12px;}
+.ch{display:grid;grid-template-columns:repeat(7,1fr);background:var(--ink);}
+.ch div{text-align:center;padding:6px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#777;}
+.cb{display:grid;grid-template-columns:repeat(7,1fr);}
+.cd{min-height:52px;padding:4px 2px 2px 4px;border-right:1px solid var(--brd);border-bottom:1px solid var(--brd);position:relative;}
+.cd:nth-child(7n){border-right:none;}.cd.emp{background:var(--bg);}.cd.tod{background:var(--gol);}
+.cd .dnum{font-size:10px;font-weight:700;color:var(--mut);line-height:1;}.cd.tod .dnum{color:var(--gold);}
+.cd .dcash{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;color:var(--gold);margin-top:2px;}
+.cd .donl{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;color:var(--blu);margin-top:1px;}
+.cd .ddots{position:absolute;bottom:2px;right:2px;display:flex;gap:2px;}
+.cd .ddot{width:4px;height:4px;border-radius:50%;}.ddc{background:var(--gom);}.ddo{background:var(--blum);}
+.msum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.msc{background:var(--surf);border-radius:11px;border:1.5px solid var(--brd);padding:9px;text-align:center;}
+.msc.full{grid-column:1/-1;}
+.msc .msv{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;line-height:1;}
+.msc .msl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--mut);margin-top:3px;}
+.sgrid{display:flex;flex-direction:column;gap:9px;}
+.sc{background:var(--surf);border-radius:13px;border:1.5px solid var(--brd);padding:13px;}
+.sc.full{grid-column:1/-1;}.sc.dark{background:var(--ink);border-color:var(--ink);}
+.sc .slb{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mut);margin-bottom:5px;}
+.sc.dark .slb{color:#666;}
+.sc .sv{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;color:var(--ink);line-height:1;}
+.sc.dark .sv{color:var(--gom);font-size:30px;}
+.sc .ssub{font-size:10px;color:var(--mut);margin-top:4px;}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--brd);font-size:12px;}
+.srow:last-child{border-bottom:none;}.srl{color:var(--mut);font-size:11px;}
+.srr{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:13px;}
+.bilanz-box{background:var(--ink);border-radius:14px;padding:16px;margin-bottom:12px;}
+.bilanz-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.07);}
+.bilanz-row:last-child{border-bottom:none;padding-top:10px;margin-top:4px;}
+.bilanz-row .bl{font-size:12px;font-weight:600;color:#aaa;}
+.bilanz-row .bv{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;}
+.bilanz-row.total .bl{font-size:14px;font-weight:800;color:#fff;}
+.bilanz-row.total .bv{font-size:22px;}
+.ai{display:flex;align-items:center;gap:10px;background:var(--surf);border-radius:11px;border:1.5px solid var(--brd);border-left:3px solid var(--red);padding:10px 12px;animation:si 0.2s ease;}
+.ai-date{background:#fff5f5;border-radius:8px;padding:5px 8px;text-align:center;flex-shrink:0;min-width:40px;}
+.ai-date .dn{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;line-height:1;color:var(--red);}
+.ai-date .dw{font-size:9px;font-weight:700;text-transform:uppercase;margin-top:1px;color:var(--red);}
+.ai-mid{flex:1;min-width:0;}
+.ai-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--red);}
+.ai-desc{font-size:12px;color:var(--mut);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ai-amt{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;color:var(--red);flex-shrink:0;}
+.ai-del{background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;padding:2px;flex-shrink:0;}
+.ai-del:active{color:var(--red);}
+.btn-ausgabe{width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:9px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.btn-ausgabe:active{transform:scale(0.98);opacity:0.85;}
+.ausgabe-desc{width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:9px;font-family:'Syne',sans-serif;font-size:14px;font-weight:600;background:var(--bg);color:var(--ink);outline:none;margin-bottom:10px;}
+.ausgabe-desc:focus{border-color:var(--red);background:#fff5f5;}
+.empty-state{text-align:center;padding:28px 20px;color:var(--mut);}
+.empty-state .icon{font-size:36px;margin-bottom:8px;}.empty-state p{font-size:13px;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--gom);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;transition:transform 0.3s cubic-bezier(.34,1.56,.64,1);z-index:999;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <h1>💰 Trink<span>geld</span></h1>
+    <div class="hpills">
+      <div class="hp hp-b"><div class="ha" id="h-b">0,00 €</div><div class="hl">🪙 Bar</div></div>
+      <div class="hp hp-o"><div class="ha" id="h-o">0,00 €</div><div class="hl">📱 Online</div></div>
+      <div class="hp hp-t"><div class="ha" id="h-t">0,00 €</div><div class="hl">∑ Monat</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('heute')">Heute</div>
+  <div class="tab" onclick="switchTab('woche')">Woche</div>
+  <div class="tab" onclick="switchTab('monat')">Monat</div>
+  <div class="tab" onclick="switchTab('stats')">Stats</div>
+  <div class="tab ausgaben-tab" onclick="switchTab('ausgaben')">💸 Ausgaben</div>
+</div>
+
+<!-- HEUTE -->
+<div class="page active" id="page-heute">
+  <div class="card">
+    <input type="date" class="date-inp" id="idate">
+
+    <div class="type-tog">
+      <button class="ttbtn ab" id="tbtn-b" onclick="setType('bar')">🪙 Bar</button>
+      <button class="ttbtn" id="tbtn-o" onclick="setType('online')">📱 Online</button>
+      <button class="ttbtn" id="tbtn-both" onclick="setType('both')">🪙📱 Beides</button>
+    </div>
+
+    <div id="amt-bar-block" class="amt-block">
+      <div class="amt-label sym-bar" id="bar-label" style="display:none">🪙 Bar-Betrag</div>
+      <div class="amt-wrap">
+        <span class="sym sym-bar">€</span>
+        <input class="amt-inp inp-bar" type="number" id="iamt" inputmode="decimal" step="0.01" min="0" placeholder="0.00">
+      </div>
+    </div>
+
+    <div id="amt-online-block" class="amt-block" style="display:none;margin-top:8px;">
+      <div class="amt-label sym-online">📱 Online-Betrag</div>
+      <div class="amt-wrap">
+        <span class="sym sym-online">€</span>
+        <input class="amt-inp inp-online" type="number" id="iamt2" inputmode="decimal" step="0.01" min="0" placeholder="0.00">
+      </div>
+    </div>
+
+    <div style="margin-top:10px">
+      <button class="btn-primary" id="addbtn" onclick="addEntry()">+ Kunde speichern (Bar)</button>
+      <button class="btn-ghost" onclick="addZero()">➕ Kunde ohne Trinkgeld (0 €)</button>
+      <button class="btn-tour" id="tour-btn" style="display:none" onclick="openPicker()">🏁 Tour abschließen & benennen</button>
+    </div>
+  </div>
+
+  <div class="sec-title" id="list-title" style="display:none">Einträge heute</div>
+  <div class="elist" id="elist"></div>
+</div>
+
+<!-- WOCHE -->
+<div class="page" id="page-woche">
+  <div class="wnav">
+    <button onclick="changeWeek(-1)">‹</button>
+    <div class="wlbl" id="wlbl">Diese Woche</div>
+    <button onclick="changeWeek(1)">›</button>
+  </div>
+  <div class="wbc">
+    <div class="wleg">
+      <div class="wli"><div class="wld" style="background:var(--gom)"></div>Bar</div>
+      <div class="wli"><div class="wld" style="background:var(--blum)"></div>Online</div>
+    </div>
+    <div class="bwrap" id="wbars"></div>
+    <div class="wtr">
+      <div class="wtb"><div class="wv wvc" id="wt-c">0,00 €</div><div class="wl">🪙 Bar</div></div>
+      <div class="wtb"><div class="wv wvo" id="wt-o">0,00 €</div><div class="wl">📱 Online</div></div>
+      <div class="wtb"><div class="wv wvt" id="wt-t">0,00 €</div><div class="wl">∑ Gesamt</div></div>
+    </div>
+  </div>
+  <div class="sec-title">Einträge diese Woche</div>
+  <div class="elist" id="wlist"></div>
+</div>
+
+<!-- MONAT -->
+<div class="page" id="page-monat">
+  <div class="mnav">
+    <button onclick="changeMonth(-1)">‹</button>
+    <div class="mlbl" id="mlbl">April 2026</div>
+    <button onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="cgrid">
+    <div class="ch"><div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div></div>
+    <div class="cb" id="cbody"></div>
+  </div>
+  <div class="msum" id="msum"></div>
+</div>
+
+<!-- STATS -->
+<div class="page" id="page-stats">
+  <div class="card" style="margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--mut);margin-bottom:10px">💾 Daten sichern & übertragen</div>
+    <button class="btn-export" onclick="exportData()">📤 Daten exportieren (Backup)</button>
+    <button class="btn-import" onclick="document.getElementById('import-file').click()">📥 Daten importieren</button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+  <div class="sgrid" id="sgrid"></div>
+</div>
+
+<!-- AUSGABEN -->
+<div class="page" id="page-ausgaben">
+  <div class="bilanz-box">
+    <div class="bilanz-row">
+      <span class="bl">💰 Trinkgeld Bar</span>
+      <span class="bv" style="color:var(--gom)" id="bil-ein">0,00 €</span>
+    </div>
+    <div class="bilanz-row">
+      <span class="bl">💸 Ausgegeben</span>
+      <span class="bv" style="color:var(--red)" id="bil-aus">0,00 €</span>
+    </div>
+    <div class="bilanz-row total">
+      <span class="bl">✅ Übrig</span>
+      <span class="bv" id="bil-uebrig">0,00 €</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--mut);margin-bottom:10px;">Ausgabe eintragen</div>
+    <input type="date" class="date-inp" id="a-date">
+    <div class="amt-block" style="margin-bottom:10px">
+      <div class="amt-wrap">
+        <span class="sym" style="color:var(--red)">€</span>
+        <input class="amt-inp" type="number" id="a-amt" inputmode="decimal" step="0.01" min="0" placeholder="0.00" style="border-color:var(--brd);" onfocus="this.style.borderColor='var(--red)';this.style.background='#fff5f5'" onblur="this.style.borderColor='var(--brd)';this.style.background='var(--bg)'">
+      </div>
+    </div>
+    <input type="text" class="ausgabe-desc" id="a-desc" placeholder="Wofür? (z.B. Kaffee, Snack...)">
+    <button class="btn-ausgabe" onclick="addAusgabe()">− Ausgabe speichern</button>
+  </div>
+
+  <div class="sec-title">Ausgaben</div>
+  <div class="elist" id="ausgaben-list"></div>
+</div>
+
+<!-- TOUR PICKER -->
+<div class="overlay" id="overlay" style="display:none" onclick="closePicker(event)">
+  <div class="picker" onclick="event.stopPropagation()">
+    <div class="picker-title">🏁 Tour benennen</div>
+    <input class="picker-inp" id="tour-name" placeholder="z.B. Tour 1, Innenstadt...">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mut);margin-bottom:8px;">Farbe</div>
+    <div class="picker-colors" id="picker-colors"></div>
+    <button class="picker-confirm" onclick="confirmTour()">✅ Tour abschließen</button>
+    <button class="picker-cancel" onclick="closePicker()">Abbrechen</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+let entries, tours, ausgaben;
+try { entries  = JSON.parse(localStorage.getItem('tg_e') || '[]'); } catch(e){ entries=[]; }
+try { tours    = JSON.parse(localStorage.getItem('tg_t') || '[]'); } catch(e){ tours=[]; }
+try { ausgaben = JSON.parse(localStorage.getItem('tg_a') || '[]'); } catch(e){ ausgaben=[]; }
+// Ensure arrays
+if(!Array.isArray(entries))  entries=[];
+if(!Array.isArray(tours))    tours=[];
+if(!Array.isArray(ausgaben)) ausgaben=[];
+
+const COLORS = [
+  {val:'#7c3aed',light:'#f3eeff'},{val:'#0891b2',light:'#ecfeff'},
+  {val:'#b45309',light:'#fffbeb'},{val:'#be185d',light:'#fdf2f8'},
+  {val:'#15803d',light:'#f0fdf4'},{val:'#1d4ed8',light:'#eff6ff'},
+  {val:'#c2410c',light:'#fff7ed'},{val:'#0f766e',light:'#f0fdfa'},
+];
+
+const fmt = n => n.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const today = () => new Date().toISOString().slice(0,10);
+const DS  = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+const MS  = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const MF  = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+
+let curType = 'bar';
+let weekOff = 0, monthOff = 0, pickerColorIdx = 0;
+let uid = Date.now();
+const nid = () => String(++uid);
+
+function saveAll(){
+  localStorage.setItem('tg_e', JSON.stringify(entries));
+  localStorage.setItem('tg_t', JSON.stringify(tours));
+}
+function saveAusgaben(){ localStorage.setItem('tg_a', JSON.stringify(ausgaben)); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+
+// ── MIGRATE OLD DATA (numeric ids → strings) ─────────────────────────────────
+try {
+  entries  = entries.map(e => ({...e, id:String(e.id), groupId:e.groupId?String(e.groupId):null, tourId:e.tourId?String(e.tourId):null}));
+  tours    = tours.map(t  => ({...t, id:String(t.id)}));
+  ausgaben = ausgaben.map(a => ({...a, id:String(a.id)}));
+} catch(e){ console.warn('Migration error:', e); }
+document.getElementById('idate').value = today();
+document.getElementById('a-date').value = today();
+
+// Build color picker
+const pcEl = document.getElementById('picker-colors');
+COLORS.forEach((c,i) => {
+  const b = document.createElement('div');
+  b.className = 'pc' + (i===0?' sel':'');
+  b.style.background = c.val;
+  b.onclick = () => { document.querySelectorAll('.pc').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); pickerColorIdx=i; };
+  pcEl.appendChild(b);
+});
+
+// ── TYPE TOGGLE ───────────────────────────────────────────────────────────────
+function setType(t){
+  curType = t;
+  document.getElementById('tbtn-b').className    = 'ttbtn' + (t==='bar'?' ab':'');
+  document.getElementById('tbtn-o').className    = 'ttbtn' + (t==='online'?' ao':'');
+  document.getElementById('tbtn-both').className = 'ttbtn' + (t==='both'?' aboth':'');
+
+  const onlineBlock = document.getElementById('amt-online-block');
+  const barLabel    = document.getElementById('bar-label');
+  const addBtn      = document.getElementById('addbtn');
+
+  if(t==='bar'){
+    onlineBlock.style.display = 'none';
+    barLabel.style.display    = 'none';
+    addBtn.className = 'btn-primary';
+    addBtn.textContent = '+ Kunde speichern (Bar)';
+  } else if(t==='online'){
+    onlineBlock.style.display = 'none';
+    barLabel.style.display    = 'none';
+    addBtn.className = 'btn-primary ob';
+    addBtn.textContent = '+ Kunde speichern (Online)';
+  } else {
+    onlineBlock.style.display = 'block';
+    barLabel.style.display    = 'block';
+    addBtn.className = 'btn-primary oboth';
+    addBtn.textContent = '+ Kunde speichern (Bar + Online)';
+  }
+}
+
+// ── ADD ENTRY ─────────────────────────────────────────────────────────────────
+function addEntry(){
+  const date = document.getElementById('idate').value;
+  if(!date){ toast('⚠️ Datum wählen'); return; }
+
+  if(curType === 'both'){
+    const amtBar = parseFloat(document.getElementById('iamt').value)  || 0;
+    const amtOnl = parseFloat(document.getElementById('iamt2').value) || 0;
+    if(amtBar <= 0 && amtOnl <= 0){ toast('⚠️ Mindestens einen Betrag eingeben'); return; }
+    const gid = nid();
+    if(amtBar > 0) entries.push({id:nid(), date, amount:amtBar, type:'bar',    tourId:null, groupId:gid});
+    if(amtOnl > 0) entries.push({id:nid(), date, amount:amtOnl, type:'online', tourId:null, groupId:gid});
+    document.getElementById('iamt').value  = '';
+    document.getElementById('iamt2').value = '';
+    document.getElementById('iamt').focus();
+    toast('🪙📱 +' + fmt(amtBar+amtOnl) + ' gespeichert');
+  } else {
+    const amt = parseFloat(document.getElementById('iamt').value);
+    if(!amt || amt <= 0){ toast('⚠️ Betrag eingeben'); return; }
+    entries.push({id:nid(), date, amount:amt, type:curType, tourId:null, groupId:null});
+    document.getElementById('iamt').value = '';
+    document.getElementById('iamt').focus();
+    toast(curType==='bar' ? '🪙 +'+fmt(amt) : '📱 +'+fmt(amt));
+  }
+
+  entries.sort((a,b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  saveAll();
+  renderAll();
+}
+
+function addZero(){
+  const date = document.getElementById('idate').value;
+  if(!date){ toast('⚠️ Datum wählen'); return; }
+  entries.push({id:nid(), date, amount:0, type:'none', tourId:null, groupId:null});
+  entries.sort((a,b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  saveAll(); renderAll();
+  toast('➕ Kunde ohne Trinkgeld gespeichert');
+}
+
+function delEntry(id){
+  entries = entries.filter(e => String(e.id) !== String(id));
+  cleanTours(); saveAll(); renderAll(); toast('🗑 Gelöscht');
+}
+
+function delGroup(gid){
+  entries = entries.filter(e => String(e.groupId) !== String(gid));
+  cleanTours(); saveAll(); renderAll(); toast('🗑 Gelöscht');
+}
+
+function delAusgabe(id){
+  ausgaben = ausgaben.filter(a => String(a.id) !== String(id));
+  saveAusgaben(); renderAusgaben(); toast('🗑 Gelöscht');
+}
+
+function cleanTours(){
+  const used = new Set(entries.map(e=>e.tourId).filter(Boolean));
+  tours = tours.filter(t => used.has(t.id));
+}
+
+// ── TOUR PICKER ───────────────────────────────────────────────────────────────
+function openPicker(){
+  const date = document.getElementById('idate').value || today();
+  const n = tours.filter(t=>t.date===date).length;
+  document.getElementById('tour-name').value = 'Tour ' + (n+1);
+  pickerColorIdx = n % COLORS.length;
+  document.querySelectorAll('.pc').forEach((b,i) => b.classList.toggle('sel', i===pickerColorIdx));
+  document.getElementById('overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('tour-name').focus(), 100);
+}
+
+function closePicker(e){
+  if(!e || e.target===document.getElementById('overlay'))
+    document.getElementById('overlay').style.display = 'none';
+}
+
+function confirmTour(){
+  const date = document.getElementById('idate').value || today();
+  const name = document.getElementById('tour-name').value.trim() || ('Tour '+(tours.filter(t=>t.date===date).length+1));
+  const col  = COLORS[pickerColorIdx];
+  const tid  = nid();
+  tours.push({id:tid, name, color:col.val, colorLight:col.light, date});
+  entries.forEach(e => { if(e.date===date && e.tourId===null) e.tourId=tid; });
+  saveAll();
+  document.getElementById('overlay').style.display = 'none';
+  renderAll();
+  toast('🏁 ' + name + ' abgeschlossen!');
+}
+
+// ── RENDER TODAY ──────────────────────────────────────────────────────────────
+function renderToday(){
+  const date      = document.getElementById('idate').value || today();
+  const dayE      = entries.filter(e => e.date===date);
+  const dayTours  = tours.filter(t => t.date===date);
+  const ungrouped = dayE.filter(e => e.tourId===null);
+
+  document.getElementById('tour-btn').style.display  = dayE.length>0 ? 'block':'none';
+  document.getElementById('list-title').style.display = dayE.length>0 ? 'block':'none';
+
+  const list = document.getElementById('elist');
+  if(dayE.length===0){ list.innerHTML=''; return; }
+
+  // collect already-rendered groupIds to avoid duplicates
+  const renderedGroups = new Set();
+  let html = '';
+
+  function renderEntry(e, tour){
+    if(e.groupId){
+      if(renderedGroups.has(e.groupId)) return '';
+      renderedGroups.add(e.groupId);
+      const partner = entries.find(x => x.groupId===e.groupId && x.id!==e.id);
+      const d = new Date(e.date+'T12:00:00');
+      const t = tour ? '<div class="ei-tour-tag" style="background:'+tour.colorLight+';color:'+tour.color+'">'+tour.name+'</div>' : '';
+      const barAmt  = e.type==='bar'    ? e.amount : (partner&&partner.type==='bar'    ? partner.amount : 0);
+      const onlAmt  = e.type==='online' ? e.amount : (partner&&partner.type==='online' ? partner.amount : 0);
+      return '<div class="ei iboth">'
+        +'<div class="ei-date"><div class="dn">'+d.getDate()+'</div><div class="dw">'+DS[d.getDay()]+'</div></div>'
+        +'<div class="ei-mid"><div class="ei-type">🪙📱 Bar + Online</div>'+t+'</div>'
+        +'<div style="text-align:right">'
+          +(barAmt>0?'<div style="font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600;color:var(--grn)">🪙+'+fmt(barAmt)+'</div>':'')
+          +(onlAmt>0?'<div style="font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600;color:var(--blu)">📱+'+fmt(onlAmt)+'</div>':'')
+        +'</div>'
+        +'<button class="ei-del" data-gid="'+e.groupId+'">×</button>'
+        +'</div>';
+    }
+    const d   = new Date(e.date+'T12:00:00');
+    const io  = e.type==='online', iz=e.type==='none';
+    const cls = iz?'iz':io?'io':'ib';
+    const tt  = tour ? '<div class="ei-tour-tag" style="background:'+tour.colorLight+';color:'+tour.color+'">'+tour.name+'</div>' : '';
+    const lbl = iz?'❌ Kein TG':io?'📱 Online':'🪙 Bar';
+    const amt = iz?'0,00 €':'+'+fmt(e.amount);
+    return '<div class="ei '+cls+'">'
+      +'<div class="ei-date"><div class="dn">'+d.getDate()+'</div><div class="dw">'+DS[d.getDay()]+'</div></div>'
+      +'<div class="ei-mid"><div class="ei-type">'+lbl+'</div>'+tt+'</div>'
+      +'<div class="ei-amt">'+amt+'</div>'
+      +'<button class="ei-del" data-id="'+e.id+'">×</button>'
+      +'</div>';
+  }
+
+  dayTours.forEach(tour => {
+    const te = dayE.filter(e => e.tourId===tour.id);
+    if(te.length===0) return;
+    const tb = te.filter(e=>e.type==='bar').reduce((s,e)=>s+e.amount,0);
+    const to = te.filter(e=>e.type==='online').reduce((s,e)=>s+e.amount,0);
+    html += '<div class="tour-group-hdr" style="background:'+tour.colorLight+'">'
+      +'<div class="tgh-dot" style="background:'+tour.color+'"></div>'
+      +'<span class="tgh-name" style="color:'+tour.color+'">'+tour.name+'</span>'
+      +(tb>0?'<span style="font-size:10px;color:var(--gold);font-weight:700">🪙'+fmt(tb)+'</span>':'')
+      +(to>0?'<span style="font-size:10px;color:var(--blu);font-weight:700;margin-left:4px">📱'+fmt(to)+'</span>':'')
+      +'<span class="tgh-sum" style="color:'+tour.color+'">'+fmt(tb+to)+'</span>'
+      +'</div>';
+    te.forEach(e => { html += renderEntry(e, tour); });
+  });
+
+  if(ungrouped.length>0){
+    if(dayTours.length>0) html += '<span class="ungrouped-hdr">🚚 Noch keiner Tour zugewiesen</span>';
+    ungrouped.forEach(e => { html += renderEntry(e, null); });
+  }
+
+  list.innerHTML = html;
+}
+
+// ── HEADER ────────────────────────────────────────────────────────────────────
+function updateHeader(){
+  const now = new Date();
+  const ym  = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const me  = entries.filter(e => e.date.startsWith(ym));
+  const b   = me.filter(e=>e.type==='bar').reduce((s,e)=>s+e.amount,0);
+  const o   = me.filter(e=>e.type==='online').reduce((s,e)=>s+e.amount,0);
+  document.getElementById('h-b').textContent = fmt(b);
+  document.getElementById('h-o').textContent = fmt(o);
+  document.getElementById('h-t').textContent = fmt(b+o);
+}
+
+// ── WEEK ──────────────────────────────────────────────────────────────────────
+function getWeekMon(off){
+  const now=new Date(); const day=now.getDay();
+  const mon=new Date(now); mon.setDate(now.getDate()+(day===0?-6:1-day)+off*7); mon.setHours(0,0,0,0);
+  return mon;
+}
+function dstr(d){ 
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function changeWeek(dir){ weekOff+=dir; renderWeek(); }
+function changeMonth(dir){ monthOff+=dir; renderMonth(); }
+
+function renderWeek(){
+  const mon=getWeekMon(weekOff);
+  const lbl=document.getElementById('wlbl');
+  if(weekOff===0) lbl.textContent='Diese Woche';
+  else if(weekOff===-1) lbl.textContent='Letzte Woche';
+  else { const s=new Date(mon); s.setDate(mon.getDate()+6); lbl.textContent=mon.getDate()+'.'+(mon.getMonth()+1)+' – '+s.getDate()+'.'+(s.getMonth()+1); }
+
+  const todayStr=today(); const days=[]; let maxA=0.01;
+  for(let i=0;i<7;i++){
+    const d=new Date(mon); d.setDate(mon.getDate()+i);
+    const ds=dstr(d);
+    const de=entries.filter(e=>e.date===ds);
+    const cash=de.filter(e=>e.type==='bar').reduce((s,e)=>s+e.amount,0);
+    const onl=de.filter(e=>e.type==='online').reduce((s,e)=>s+e.amount,0);
+    const tot=cash+onl; if(tot>maxA) maxA=tot;
+    days.push({d,ds,cash,onl,tot});
+  }
+
+  document.getElementById('wbars').innerHTML = days.map(({d,ds,cash,onl,tot})=>{
+    const h=(tot/maxA)*82, ch=tot>0?(cash/tot)*h:0, oh=tot>0?(onl/tot)*h:0;
+    return '<div class="bcol">'
+      +(tot>0?'<div class="bamt">'+tot.toFixed(0)+'€</div>':'<div class="bamt" style="opacity:0">0</div>')
+      +'<div class="bstack" style="height:'+Math.max(h,3)+'px">'
+        +'<div style="background:var(--blum);width:100%;height:'+oh+'px"></div>'
+        +'<div style="background:var(--gom);width:100%;height:'+ch+'px"></div>'
+      +'</div>'
+      +'<div class="bday'+(ds===todayStr?' td':'')+'">'+DS[d.getDay()]+'</div>'
+      +'</div>';
+  }).join('');
+
+  const tc=days.reduce((s,d)=>s+d.cash,0), to=days.reduce((s,d)=>s+d.onl,0);
+  document.getElementById('wt-c').textContent=fmt(tc);
+  document.getElementById('wt-o').textContent=fmt(to);
+  document.getElementById('wt-t').textContent=fmt(tc+to);
+
+  const ms=dstr(getWeekMon(weekOff)); const sd=new Date(getWeekMon(weekOff)); sd.setDate(sd.getDate()+6);
+  const wl=document.getElementById('wlist');
+  const we=entries.filter(e=>e.date>=ms&&e.date<=dstr(sd));
+  if(we.length===0){ wl.innerHTML='<div class="empty-state"><div class="icon">📅</div><p>Keine Einträge diese Woche.</p></div>'; return; }
+  const seen=new Set();
+  wl.innerHTML=we.map(e=>{
+    if(e.groupId){ if(seen.has(e.groupId)) return ''; seen.add(e.groupId); }
+    const d=new Date(e.date+'T12:00:00');
+    const io=e.type==='online', iz=e.type==='none';
+    const partner=e.groupId?entries.find(x=>x.groupId===e.groupId&&x.id!==e.id):null;
+    const cls=e.groupId?'iboth':iz?'iz':io?'io':'ib';
+    const tour=tours.find(t=>t.id===e.tourId);
+    const tt=tour?'<div class="ei-tour-tag" style="background:'+tour.colorLight+';color:'+tour.color+'">'+tour.name+'</div>':'';
+    let amtPart='';
+    if(e.groupId){
+      const ba=e.type==='bar'?e.amount:(partner&&partner.type==='bar'?partner.amount:0);
+      const oa=e.type==='online'?e.amount:(partner&&partner.type==='online'?partner.amount:0);
+      amtPart='<div style="text-align:right">'
+        +(ba>0?'<div style="font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600;color:var(--grn)">🪙+'+fmt(ba)+'</div>':'')
+        +(oa>0?'<div style="font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600;color:var(--blu)">📱+'+fmt(oa)+'</div>':'')
+        +'</div>';
+    } else {
+      amtPart='<div class="ei-amt">'+(iz?'0,00 €':'+'+fmt(e.amount))+'</div>';
+    }
+    const lbl=e.groupId?'🪙📱 Bar + Online':iz?'❌ Kein TG':io?'📱 Online':'🪙 Bar';
+    const delBtn=e.groupId
+      ?'<button class="ei-del" data-gid="'+e.groupId+'">×</button>'
+      :'<button class="ei-del" data-id="'+e.id+'">×</button>';
+    return '<div class="ei '+cls+'">'
+      +'<div class="ei-date"><div class="dn">'+d.getDate()+'</div><div class="dw">'+DS[d.getDay()]+'</div></div>'
+      +'<div class="ei-mid"><div class="ei-type">'+lbl+'</div><div style="font-size:11px;color:var(--mut)">'+MF[d.getDay()]+', '+MS[d.getMonth()]+'</div>'+tt+'</div>'
+      +amtPart
+      +delBtn
+      +'</div>';
+  }).join('');
+}
+
+// ── MONTH ─────────────────────────────────────────────────────────────────────
+function renderMonth(){
+  const now=new Date(); const t=new Date(now.getFullYear(),now.getMonth()+monthOff,1);
+  const tY=t.getFullYear(), tM=t.getMonth();
+  document.getElementById('mlbl').textContent=MS[tM]+' '+tY;
+  const last=new Date(tY,tM+1,0); const todayStr=today();
+  let sdow=new Date(tY,tM,1).getDay(); if(sdow===0) sdow=7;
+  let html=''; for(let i=0;i<sdow-1;i++) html+='<div class="cd emp"></div>';
+  for(let day=1;day<=last.getDate();day++){
+    const ds=tY+'-'+String(tM+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    const de=entries.filter(e=>e.date===ds);
+    const cash=de.filter(e=>e.type==='bar').reduce((s,e)=>s+e.amount,0);
+    const onl=de.filter(e=>e.type==='online').reduce((s,e)=>s+e.amount,0);
+    html+='<div class="cd'+(ds===todayStr?' tod':'')+'">'
+      +'<div class="dnum">'+day+'</div>'
+      +(cash>0?'<div class="dcash">'+cash.toFixed(0)+'€</div>':'')
+      +(onl>0?'<div class="donl">'+onl.toFixed(0)+'€</div>':'')
+      +((cash>0||onl>0)?'<div class="ddots">'+(cash>0?'<div class="ddot ddc"></div>':'')+(onl>0?'<div class="ddot ddo"></div>':'')+'</div>':'')
+      +'</div>';
+  }
+  document.getElementById('cbody').innerHTML=html;
+  const ym=tY+'-'+String(tM+1).padStart(2,'0');
+  const me=entries.filter(e=>e.date.startsWith(ym));
+  const mc=me.filter(e=>e.type==='bar').reduce((s,e)=>s+e.amount,0);
+  const mo=me.filter(e=>e.type==='online').reduce((s,e)=>s+e.amount,0);
+  const mt=mc+mo; const ud=new Set(me.map(e=>e.date)).size;
+  document.getElementById('msum').innerHTML=
+    '<div class="msc full"><div class="msv" style="color:var(--grn);font-size:22px">'+fmt(mt)+'</div><div class="msl">Gesamt '+MS[tM]+'</div></div>'
+    +'<div class="msc"><div class="msv" style="color:var(--gold)">'+fmt(mc)+'</div><div class="msl">🪙 Bar</div></div>'
+    +'<div class="msc"><div class="msv" style="color:var(--blu)">'+fmt(mo)+'</div><div class="msl">📱 Online</div></div>'
+    +'<div class="msc"><div class="msv">'+ud+'</div><div class="msl">Tage</div></div>'
+    +'<div class="msc"><div class="msv">'+(ud>0?(mt/ud).toFixed(0)+'€':'–')+'</div><div class="msl">Ø / Tag</div></div>'
+    +'<div class="msc"><div class="msv">'+(mt>0?Math.round(mc/mt*100):0)+'%</div><div class="msl">Bar-Anteil</div></div>';
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function renderStats(){
+  const g=document.getElementById('sgrid');
+  if(entries.length===0){ g.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="icon">📊</div><p>Noch keine Daten.</p></div>'; return; }
+  const now=new Date(); const ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const me=entries.filter(e=>e.date.startsWith(ym));
+  const allC=entries.filter(e=>e.type==='bar').reduce((s,e)=>s+e.amount,0);
+  const allO=entries.filter(e=>e.type==='online').reduce((s,e)=>s+e.amount,0);
+  const allT=allC+allO;
+  const mC=me.filter(e=>e.type==='bar').reduce((s,e)=>s+e.amount,0);
+  const mO=me.filter(e=>e.type==='online').reduce((s,e)=>s+e.amount,0);
+  const mT=mC+mO;
+  const byDay={}; entries.forEach(e=>{ byDay[e.date]=(byDay[e.date]||0)+e.amount; });
+  const bdKey=Object.keys(byDay).sort((a,b)=>byDay[b]-byDay[a])[0];
+  const byMon={}; entries.forEach(e=>{ const m=e.date.slice(0,7); byMon[m]=(byMon[m]||0)+e.amount; });
+  const bmKey=Object.keys(byMon).sort((a,b)=>byMon[b]-byMon[a])[0];
+  const ud=new Set(entries.map(e=>e.date)).size;
+  const avgK=entries.length>0?allT/entries.length:0;
+  // Frequency distribution - simple and robust
+  const freq={};
+  entries.forEach(function(e){
+    if(e.type==='none') return;
+    var a=parseFloat(e.amount);
+    if(isNaN(a)||a<=0) return;
+    var key=a.toFixed(2);
+    freq[key]=(freq[key]||0)+1;
+  });
+  var freqKeys=Object.keys(freq).sort(function(a,b){return freq[b]-freq[a];});
+  var maxCount=freqKeys.length>0?freq[freqKeys[0]]:1;
+  var freqRows='';
+  if(freqKeys.length===0){
+    freqRows='<div style="color:var(--mut);font-size:12px;padding:4px 0">Noch keine Daten</div>';
+  } else {
+    freqKeys.forEach(function(k){
+      var count=freq[k];
+      var pct=Math.round(count/maxCount*100);
+      freqRows+='<div style="margin-bottom:10px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+          +'<span style="font-family:JetBrains Mono,monospace;font-size:14px;font-weight:700;color:var(--ink)">'+k+' €</span>'
+          +'<span style="font-size:13px;font-weight:700;color:var(--mut)">'+count+'×</span>'
+        +'</div>'
+        +'<div style="background:var(--brd);border-radius:4px;height:10px">'
+          +'<div style="background:var(--gom);height:10px;width:'+pct+'%;border-radius:4px"></div>'
+        +'</div>'
+        +'</div>';
+    });
+  }
+
+  g.innerHTML=
+    '<div class="sc full dark"><div class="slb">Gesamt aller Zeiten</div><div class="sv">'+fmt(allT)+'</div><div class="ssub">'+entries.length+' Kunden · '+ud+' Tage</div></div>'
+    +'<div class="sc full"><div class="slb">📊 Häufigkeit der Beträge</div>'+freqRows+'</div>'
+    +'<div class="sc full"><div class="slb">Aufschlüsselung</div>'
+      +'<div class="srow"><span class="srl">🪙 Bar</span><span class="srr" style="color:var(--gold)">'+fmt(allC)+'</span></div>'
+      +'<div class="srow"><span class="srl">📱 Online</span><span class="srr" style="color:var(--blu)">'+fmt(allO)+'</span></div>'
+      +'<div class="srow"><span class="srl">Bar-Anteil</span><span class="srr">'+(allT>0?Math.round(allC/allT*100):0)+'%</span></div>'
+      +'<div class="srow"><span class="srl">Ø pro Kunde</span><span class="srr" style="color:var(--grn)">'+fmt(avgK)+'</span></div>'
+      +'<div class="srow"><span class="srl">Kunden gesamt</span><span class="srr">'+entries.length+'</span></div>'
+    +'</div>'
+    +'<div class="sc full"><div class="slb">Dieser Monat</div>'
+      +'<div class="srow"><span class="srl">🪙 Bar</span><span class="srr" style="color:var(--gold)">'+fmt(mC)+'</span></div>'
+      +'<div class="srow"><span class="srl">📱 Online</span><span class="srr" style="color:var(--blu)">'+fmt(mO)+'</span></div>'
+      +'<div class="srow"><span class="srl">∑ Gesamt</span><span class="srr" style="color:var(--grn)">'+fmt(mT)+'</span></div>'
+      +'<div class="srow"><span class="srl">Ø pro Kunde</span><span class="srr">'+(me.length>0?fmt(mT/me.length):'–')+'</span></div>'
+      +'<div class="srow"><span class="srl">Kunden diesen Monat</span><span class="srr">'+me.length+'</span></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">'
+    +'<div class="sc"><div class="slb">🏆 Bester Tag</div><div class="sv" style="color:var(--gold);font-size:18px">'+(bdKey?fmt(byDay[bdKey]):'–')+'</div><div class="ssub">'+(bdKey?new Date(bdKey+'T12:00:00').toLocaleDateString('de-DE',{day:'numeric',month:'short',year:'numeric'}):'–')+'</div></div>'
+    +'<div class="sc"><div class="slb">📅 Bester Monat</div><div class="sv" style="color:var(--grn);font-size:18px">'+(bmKey?fmt(byMon[bmKey]):'–')+'</div><div class="ssub">'+(bmKey?MS[parseInt(bmKey.slice(5))-1]+' '+bmKey.slice(0,4):'–')+'</div></div>'
+    +'</div>';
+}
+
+// ── AUSGABEN ──────────────────────────────────────────────────────────────────
+function addAusgabe(){
+  const date=document.getElementById('a-date').value;
+  const amt=parseFloat(document.getElementById('a-amt').value);
+  const desc=document.getElementById('a-desc').value.trim();
+  if(!date){ toast('⚠️ Datum wählen'); return; }
+  if(!amt||amt<=0){ toast('⚠️ Betrag eingeben'); return; }
+  ausgaben.push({id:nid(), date, amount:amt, desc});
+  ausgaben.sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
+  saveAusgaben();
+  document.getElementById('a-amt').value='';
+  document.getElementById('a-desc').value='';
+  renderAusgaben();
+  toast('💸 −'+fmt(amt)+' gespeichert');
+}
+
+function renderAusgaben(){
+  const totalBar=entries.filter(e=>e.type==='bar').reduce((s,e)=>s+e.amount,0);
+  const totalAus=ausgaben.reduce((s,a)=>s+a.amount,0);
+  const uebrig=totalBar-totalAus;
+  document.getElementById('bil-ein').textContent=fmt(totalBar);
+  document.getElementById('bil-aus').textContent=fmt(totalAus);
+  const uel=document.getElementById('bil-uebrig');
+  uel.textContent=fmt(uebrig);
+  uel.style.color=uebrig>=0?'var(--gom)':'var(--red)';
+
+  const list=document.getElementById('ausgaben-list');
+  if(ausgaben.length===0){ list.innerHTML='<div class="empty-state"><div class="icon">💸</div><p>Noch keine Ausgaben.</p></div>'; return; }
+  list.innerHTML=ausgaben.map(a=>{
+    const d=new Date(a.date+'T12:00:00');
+    return '<div class="ai">'
+      +'<div class="ai-date"><div class="dn">'+d.getDate()+'</div><div class="dw">'+DS[d.getDay()]+'</div></div>'
+      +'<div class="ai-mid"><div class="ai-type">💸 Ausgabe</div><div class="ai-desc">'+(a.desc||MF[d.getDay()]+', '+MS[d.getMonth()])+'</div></div>'
+      +'<div class="ai-amt">−'+fmt(a.amount)+'</div>'
+      +'<button class="ai-del" data-aid="'+a.id+'">×</button>'
+      +'</div>';
+  }).join('');
+}
+
+// ── EXPORT / IMPORT ───────────────────────────────────────────────────────────
+function exportData(){
+  var data = {entries:entries, tours:tours, ausgaben:ausgaben, exportDate:new Date().toISOString()};
+  var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url;
+  a.download = 'trinkgeld-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('📤 Backup gespeichert!');
+}
+
+function importData(event){
+  var file = event.target.files[0];
+  if(!file){ return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      var data = JSON.parse(e.target.result);
+      if(!data.entries || !Array.isArray(data.entries)){
+        toast('⚠️ Ungültige Backup-Datei'); return;
+      }
+      entries  = data.entries  || [];
+      tours    = data.tours    || [];
+      ausgaben = data.ausgaben || [];
+      // migrate ids to strings
+      entries  = entries.map(function(x){ return Object.assign({},x,{id:String(x.id),groupId:x.groupId?String(x.groupId):null,tourId:x.tourId?String(x.tourId):null}); });
+      tours    = tours.map(function(x){ return Object.assign({},x,{id:String(x.id)}); });
+      ausgaben = ausgaben.map(function(x){ return Object.assign({},x,{id:String(x.id)}); });
+      saveAll(); saveAusgaben();
+      renderAll();
+      toast('✅ ' + entries.length + ' Einträge importiert!');
+    } catch(err){
+      toast('⚠️ Fehler beim Import');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active', ['heute','woche','monat','stats','ausgaben'][i]===name);
+  });
+  document.querySelectorAll('.page').forEach(p=>{
+    p.classList.toggle('active', p.id==='page-'+name);
+  });
+  renderAll();
+}
+
+function renderAll(){
+  updateHeader(); renderToday(); renderWeek(); renderMonth(); renderStats(); renderAusgaben();
+}
+
+document.getElementById('idate').addEventListener('change', renderToday);
+
+// Central delete handler - no more onclick with ids
+document.addEventListener('click', function(ev){
+  const btn = ev.target.closest('.ei-del');
+  if(btn){
+    const gid = btn.getAttribute('data-gid');
+    const id  = btn.getAttribute('data-id');
+    if(gid) delGroup(gid);
+    else if(id) delEntry(id);
+    return;
+  }
+  const abtn = ev.target.closest('.ai-del');
+  if(abtn){
+    const aid = abtn.getAttribute('data-aid');
+    if(aid) delAusgabe(aid);
+  }
+});
+
+renderAll();
+</script>
+</body>
+</html>
